@@ -1,0 +1,6 @@
+{
+  "name": "DigiSolia",
+  "description": "Solutions numériques, automatisation et formations en intelligence artificielle pour les PME et dirigeants en Afrique de l'Ouest.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

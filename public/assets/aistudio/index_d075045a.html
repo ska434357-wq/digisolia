@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DigiSolia accompagne les entreprises dans leur transformation numérique : développement Web et mobile, automatisation et formation en intelligence artificielle.">
+  <meta name="theme-color" content="#08152d">
+  <title>DigiSolia — Solutions numériques & intelligence artificielle</title>
+  <style>
+    :root{--navy:#08152d;--navy2:#10264a;--blue:#3185f5;--cyan:#35d2d0;--ink:#14233b;--muted:#64748b;--pale:#f3f7fc;--white:#fff}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink);line-height:1.6}
+    a{text-decoration:none;color:inherit}.wrap{width:min(1120px,92%);margin:auto}
+    header{position:sticky;top:0;z-index:10;background:rgba(8,21,45,.96);backdrop-filter:blur(12px);color:white;border-bottom:1px solid #ffffff18}
+    nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{font-weight:850;font-size:1.45rem;letter-spacing:-.04em}.brand span{color:var(--cyan)}
+    .navlinks{display:flex;gap:24px;align-items:center;font-size:.93rem;color:#d8e5fa}.navlinks a:hover{color:var(--cyan)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 19px;border-radius:12px;font-weight:750;background:linear-gradient(110deg,var(--blue),#2468d8);color:white;box-shadow:0 10px 25px #236de544;transition:.2s}
+    .btn:hover{transform:translateY(-2px)}.btn.outline{background:transparent;border:1px solid #ffffff55;box-shadow:none}
+    .hero{background:radial-gradient(ellipse at 80% 20%,#1c5b9b66,transparent 38%),linear-gradient(135deg,var(--navy),#102d55 72%,#0a3c60);color:white;padding:100px 0 94px;overflow:hidden}
+    .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:55px;align-items:center}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid #ffffff35;border-radius:999px;color:#c8f7f4;font-size:.85rem}
+    h1{font-size:clamp(2.5rem,5.3vw,4.5rem);line-height:1.08;letter-spacing:-.055em;margin:22px 0}
+    h1 em{font-style:normal;background:linear-gradient(90deg,#55d9d4,#72aaff);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero p{font-size:1.13rem;color:#d0def1;max-width:650px}.actions{display:flex;gap:13px;flex-wrap:wrap;margin-top:30px}
+    .visual{min-height:330px;border:1px solid #ffffff25;border-radius:28px;background:linear-gradient(145deg,#ffffff17,#ffffff08);padding:26px;box-shadow:0 25px 70px #0004;position:relative}
+    .visual:before,.visual:after{content:"";position:absolute;border-radius:50%;filter:blur(1px)}
+    .visual:before{width:170px;height:170px;background:#31d3d055;right:-25px;top:-35px}.visual:after{width:120px;height:120px;background:#347ff566;left:-25px;bottom:-25px}
+    .screen{position:relative;z-index:1;background:#09172de8;border:1px solid #ffffff2a;border-radius:18px;padding:20px}
+    .dots{display:flex;gap:6px;margin-bottom:22px}.dots i{width:8px;height:8px;border-radius:50%;background:#78a5d9}
+    .code-line{height:9px;border-radius:8px;background:#315276;margin:12px 0}.code-line:nth-child(3n){width:72%;background:#247f91}.code-line:nth-child(4n){width:48%;background:#4569a9}
+    .mini-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:22px}.mini-cards span{height:62px;border-radius:10px;background:linear-gradient(135deg,#1d4c7b,#15304f);border:1px solid #ffffff18}
+    section{padding:82px 0}.section-head{text-align:center;max-width:720px;margin:0 auto 42px}.kicker{color:#2677dc;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;font-weight:850}
+    h2{font-size:clamp(2rem,3.5vw,2.8rem);line-height:1.15;letter-spacing:-.04em;margin:10px 0 14px}.section-head p,.muted{color:var(--muted)}
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.card{background:white;border:1px solid #e5edf6;border-radius:18px;padding:25px;box-shadow:0 12px 35px #0c2c5010}
+    .icon{width:48px;height:48px;border-radius:14px;background:#eaf3ff;color:#216bd0;display:grid;place-items:center;font-size:1.4rem;margin-bottom:18px}
+    .card h3{margin:0 0 9px;font-size:1.12rem}.card p{color:var(--muted);font-size:.95rem;margin:0}
+    .about{background:var(--pale)}.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:55px;align-items:center}
+    .feature{display:flex;gap:13px;margin:18px 0}.check{flex:0 0 27px;width:27px;height:27px;border-radius:50%;background:#dff8f4;color:#07877f;display:grid;place-items:center;font-weight:900}
+    .about-panel{background:linear-gradient(145deg,#0c2142,#174b79);color:white;border-radius:24px;padding:34px;min-height:300px;display:flex;flex-direction:column;justify-content:space-between}
+    .about-panel p{color:#d5e5f7}.stat{font-size:2rem;font-weight:850;color:#65ded7}
+    .cta{background:linear-gradient(120deg,#0c2142,#124b78);color:white;text-align:center}.cta p{color:#d4e3f4;max-width:650px;margin:0 auto 25px}
+    .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin:35px auto 0}.contact-box{border:1px solid #ffffff30;border-radius:16px;padding:22px}
+    footer{background:#061124;color:#aebed2;padding:25px 0;font-size:.9rem}.footer-inner{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    @media(max-width:850px){.hero-grid,.about-grid{grid-template-columns:1fr}.visual{max-width:520px}.cards{grid-template-columns:repeat(2,1fr)}.navlinks{gap:13px}}
+    @media(max-width:600px){nav{padding:13px 0;align-items:flex-start}.navlinks{display:none}.hero{padding:75px 0}.cards{grid-template-columns:1fr}.contact-grid{grid-template-columns:1fr}section{padding:65px 0}.visual{min-height:260px}.footer-inner{display:block}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <nav aria-label="Navigation principale">
+      <a class="brand" href="#accueil">Digi<span>Solia</span></a>
+      <div class="navlinks">
+        <a href="#services">Services</a><a href="#apropos">À propos</a><a href="#contact">Contact</a>
+      </div>
+      <a class="btn" href="https://wa.me/22670478322?text=Bonjour%20DigiSolia%2C%20je%20souhaite%20en%20savoir%20plus%20sur%20vos%20services." target="_blank" rel="noopener">Parler à un expert</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="accueil">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">✦ Innovation • Technologie • Formation</span>
+        <h1>Vos idées prennent vie grâce au <em>numérique.</em></h1>
+        <p>DigiSolia conçoit des applications Web et mobiles, automatise vos processus et vous forme à l’intelligence artificielle pour faire avancer vos projets.</p>
+        <div class="actions">
+          <a class="btn" href="https://wa.me/22670478322?text=Bonjour%20DigiSolia%2C%20je%20souhaite%20discuter%20d%27un%20projet." target="_blank" rel="noopener">Discuter de mon projet →</a>
+          <a class="btn outline" href="#services">Découvrir nos services</a>
+        </div>
+      </div>
+      <div class="visual" aria-label="Illustration abstraite d'une interface numérique">
+        <div class="screen">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div style="color:#9cece5;font-weight:750;margin-bottom:15px">DIGISOLIA / DIGITAL STUDIO</div>
+          <div class="code-line" style="width:90%"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div><div class="code-line"></div>
+          <div class="mini-cards"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">Ce que nous faisons</div>
+        <h2>Des solutions adaptées à vos ambitions</h2>
+        <p>De la conception à la mise en œuvre, nous vous accompagnons avec des solutions numériques utiles, évolutives et pensées pour vos besoins.</p>
+      </div>
+      <div class="cards">
+        <article class="card"><div class="icon">⌘</div><h3>Applications Web</h3><p>Conception de logiciels et plateformes Web sur mesure pour simplifier la gestion et développer votre activité.</p></article>
+        <article class="card"><div class="icon">▣</div><h3>Applications mobiles</h3><p>Création d’expériences mobiles intuitives pour rapprocher vos services de vos utilisateurs.</p></article>
+        <article class="card"><div class="icon">⚙</div><h3>Automatisation</h3><p>Automatisation des tâches répétitives et optimisation de vos processus pour gagner du temps.</p></article>
+        <article class="card"><div class="icon">✧</div><h3>Formation en IA</h3><p>Formations pratiques pour comprendre, utiliser et intégrer l’intelligence artificielle dans votre travail.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="apropos">
+    <div class="wrap about-grid">
+      <div>
+        <div class="kicker">À propos de DigiSolia</div>
+        <h2>La technologie doit créer des opportunités.</h2>
+        <p class="muted">Notre mission est d’aider les professionnels, entreprises et organisations à tirer parti du numérique grâce à des outils accessibles, efficaces et adaptés à leurs objectifs.</p>
+        <div class="feature"><span class="check">✓</span><div><strong>Approche personnalisée</strong><br><span class="muted">Des solutions pensées autour de vos besoins.</span></div></div>
+        <div class="feature"><span class="check">✓</span><div><strong>Innovation utile</strong><br><span class="muted">Des technologies au service de résultats concrets.</span></div></div>
+        <div class="feature"><span class="check">✓</span><div><strong>Accompagnement</strong><br><span class="muted">Un échange clair à chaque étape de votre projet.</span></div></div>
+      </div>
+      <div class="about-panel">
+        <div><div class="stat">DigiSolia</div><h3>Construisons votre prochaine solution.</h3><p>Un projet d’application, un processus à automatiser ou une formation en IA ? Parlons-en.</p></div>
+        <a class="btn" style="align-self:flex-start;background:linear-gradient(110deg,#27bfc0,#287de8)" href="https://wa.me/22670478322?text=Bonjour%20DigiSolia%2C%20j%27aimerais%20%C3%A9changer%20sur%20vos%20services." target="_blank" rel="noopener">Nous contacter →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" id="contact">
+    <div class="wrap">
+      <div class="kicker" style="color:#69e1dc">Passons à l'action</div>
+      <h2>Parlons de votre projet.</h2>
+      <p>Contactez DigiSolia pour discuter de votre besoin en développement logiciel, automatisation ou formation en intelligence artificielle.</p>
+      <div class="contact-grid">
+        <div class="contact-box"><div style="font-size:1.5rem">☏</div><strong>Téléphone</strong><p><a href="tel:+22670478322">+226 70 47 83 22</a><br><a href="tel:+22676127809">+226 76 12 78 09</a></p></div>
+        <div class="contact-box"><div style="font-size:1.5rem">◉</div><strong>WhatsApp</strong><p><a href="https://wa.me/22670478322?text=Bonjour%20DigiSolia%2C%20je%20vous%20contacte%20depuis%20votre%20site." target="_blank" rel="noopener">Écrire à DigiSolia</a></p></div>
+      </div>
+      <div style="margin-top:28px"><a class="btn" style="background:#20b978" href="https://wa.me/22670478322?text=Bonjour%20DigiSolia%2C%20je%20souhaite%20obtenir%20des%20informations." target="_blank" rel="noopener">Contacter sur WhatsApp</a></div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap footer-inner"><span>© <span id="year">2026</span> DigiSolia. Tous droits réservés.</span><span>Solutions numériques • Automatisation • Intelligence artificielle</span></div></footer>
+</body>
+</html>
