@@ -31,6 +31,7 @@ export default function App() {
   });
 
   const [selectedService, setSelectedService] = useState<ServiceId>('web');
+  const [serviceSelectTrigger, setServiceSelectTrigger] = useState(0);
   const [adminOpen, setAdminOpen] = useState(false);
 
   const { isOnline, pendingCount, syncMessage, enqueueLead } = useOfflineLeadQueue();
@@ -50,7 +51,20 @@ export default function App() {
     if (descEl) {
       descEl.setAttribute('content', meta.description);
     }
+
+    let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonicalEl) {
+      canonicalEl = document.createElement('link');
+      canonicalEl.rel = 'canonical';
+      document.head.appendChild(canonicalEl);
+    }
+    canonicalEl.href = window.location.origin + window.location.pathname;
   }, [language]);
+
+  const handleSelectService = (service: ServiceId) => {
+    setSelectedService(service);
+    setServiceSelectTrigger((n) => n + 1);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] text-[#0f172a]">
@@ -58,7 +72,7 @@ export default function App() {
 
       <main className="flex-1">
         <HeroSection language={language} />
-        <ServicesBento language={language} onSelectService={setSelectedService} />
+        <ServicesBento language={language} onSelectService={handleSelectService} />
         <TrainingCatalog
           language={language}
           isOnline={isOnline}
@@ -68,6 +82,7 @@ export default function App() {
         <QuoteSection
           language={language}
           selectedService={selectedService}
+          serviceSelectTrigger={serviceSelectTrigger}
           isOnline={isOnline}
           onEnqueueOffline={enqueueLead}
         />

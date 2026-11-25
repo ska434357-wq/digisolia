@@ -26,7 +26,7 @@ export const ServicesBento: React.FC<ServicesBentoProps> = ({ language, onSelect
   };
 
   return (
-    <section id="services" className="bg-[#f8fafc] py-20 sm:py-24">
+    <section id="services" className="scroll-mt-16 bg-[#f8fafc] py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold text-[#2563eb]">

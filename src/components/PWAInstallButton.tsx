@@ -50,6 +50,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby="ios-install-title"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowIOSGuide(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setShowIOSGuide(false);
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
           >
             <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl">

@@ -1,4 +1,4 @@
-import { CheckCircle2, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { Check, CheckCircle2, Copy, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { translations } from '../i18n/translations';
 import type { Language, LeadPayload, ServiceId } from '../types';
@@ -12,6 +12,7 @@ import {
 interface QuoteSectionProps {
   language: Language;
   selectedService: ServiceId;
+  serviceSelectTrigger: number;
   isOnline: boolean;
   onEnqueueOffline: (payload: LeadPayload) => void;
 }
@@ -19,6 +20,7 @@ interface QuoteSectionProps {
 export const QuoteSection: React.FC<QuoteSectionProps> = ({
   language,
   selectedService,
+  serviceSelectTrigger,
   isOnline,
   onEnqueueOffline,
 }) => {
@@ -30,42 +32,66 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [service, setService] = useState<ServiceId>(selectedService);
-  const [budget, setBudget] = useState<string>(f.budgets[1]);
-  const [timeline, setTimeline] = useState<string>(f.timelines[1]);
+  const [budgetIndex, setBudgetIndex] = useState(1);
+  const [timelineIndex, setTimelineIndex] = useState(1);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState<{
     refId: string;
     offline: boolean;
     waUrl: string;
     mailUrl: string;
+    summaryText: string;
   } | null>(null);
 
   useEffect(() => {
     setService(selectedService);
-  }, [selectedService]);
+    if (serviceSelectTrigger > 0) {
+      setSubmitted(null);
+      setErrorMsg(null);
+    }
+  }, [selectedService, serviceSelectTrigger]);
 
-  useEffect(() => {
-    setBudget(f.budgets[1]);
-    setTimeline(f.timelines[1]);
-  }, [language]);
+  const budget = f.budgets[budgetIndex] ?? f.budgets[0];
+  const timeline = f.timelines[timelineIndex] ?? f.timelines[0];
 
-  const validate = () => {
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const getValidationError = (): string | null => {
+    if (fullName.trim().length < 2) {
+      return language === 'fr'
+        ? 'Veuillez renseigner votre nom complet (au moins 2 caractères).'
+        : 'Please enter your full name (at least 2 characters).';
+    }
     const digits = phone.replace(/[^\d]/g, '');
-    const phoneOk = digits.length >= 8 && digits.length <= 16;
-    return fullName.trim().length >= 2 && emailOk && phoneOk && message.trim().length >= 10;
+    if (digits.length < 8 || digits.length > 16) {
+      return language === 'fr'
+        ? 'Veuillez saisir un numéro de téléphone / WhatsApp valide (au moins 8 chiffres).'
+        : 'Please enter a valid phone / WhatsApp number (at least 8 digits).';
+    }
+    if (email.trim().length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return language === 'fr'
+        ? 'L’adresse email saisie semble invalide (ou laissez le champ vide).'
+        : 'The email address looks invalid (or leave the field blank).';
+    }
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!validate()) {
-      setErrorMsg(f.validationError);
+    const validationError = getValidationError();
+    if (validationError) {
+      setErrorMsg(validationError);
       return;
     }
+
+    const cleanMessage =
+      message.trim() ||
+      (language === 'en'
+        ? `Quote request for ${f.services[service]} (${budget}, ${timeline})`
+        : `Demande de devis pour ${f.services[service]} (${budget}, ${timeline})`);
 
     const payload: LeadPayload = {
       type: 'quote',
@@ -76,7 +102,7 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
       service,
       budget,
       timeline,
-      message: message.trim(),
+      message: cleanMessage,
       language,
     };
 
@@ -100,7 +126,13 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
 
     if (!isOnline) {
       onEnqueueOffline(payload);
-      setSubmitted({ refId: 'OFFLINE-QUEUE', offline: true, waUrl, mailUrl });
+      setSubmitted({
+        refId: 'OFFLINE-QUEUE',
+        offline: true,
+        waUrl,
+        mailUrl,
+        summaryText: formattedText,
+      });
       return;
     }
 
@@ -112,15 +144,42 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
+        if (res.status === 400) {
+          setErrorMsg(f.validationError);
+          return;
+        }
         throw new Error('Failed to save lead');
       }
       const data = (await res.json()) as { id: string };
-      setSubmitted({ refId: data.id, offline: false, waUrl, mailUrl });
+      setSubmitted({
+        refId: data.id,
+        offline: false,
+        waUrl,
+        mailUrl,
+        summaryText: formattedText,
+      });
     } catch {
       onEnqueueOffline(payload);
-      setSubmitted({ refId: 'LOCAL-QUEUE', offline: true, waUrl, mailUrl });
+      setSubmitted({
+        refId: 'LOCAL-QUEUE',
+        offline: true,
+        waUrl,
+        mailUrl,
+        summaryText: formattedText,
+      });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCopySummary = async () => {
+    if (!submitted) return;
+    try {
+      await navigator.clipboard.writeText(submitted.summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Fallback ignored if clipboard permission unavailable
     }
   };
 
@@ -132,6 +191,7 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
     setEmail('');
     setMessage('');
     setErrorMsg(null);
+    setCopied(false);
   };
 
   const directWaUrl = buildWhatsAppUrl(
@@ -141,7 +201,7 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
   );
 
   return (
-    <section id="devis" className="bg-[#08152d] py-20 sm:py-24 text-white">
+    <section id="devis" className="scroll-mt-16 bg-[#08152d] py-20 sm:py-24 text-white">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           {/* Left Column: Direct Contacts */}
@@ -211,7 +271,7 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 text-slate-900 shadow-xl">
               {submitted ? (
-                <div className="space-y-6 py-4">
+                <div className="space-y-5 py-2">
                   <div className="flex items-start gap-3 rounded-xl border border-teal-200 bg-teal-50/70 p-5">
                     <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-[#0d9488]" aria-hidden="true" />
                     <div>
@@ -227,23 +287,47 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                     </div>
                   </div>
 
+                  <pre className="whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-4 font-sans text-xs leading-relaxed text-slate-700">
+                    {submitted.summaryText}
+                  </pre>
+
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a
                       href={submitted.waUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0f766e]"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#0d9488] px-4 py-3 text-sm font-semibold text-white hover:bg-[#0f766e]"
                     >
                       <MessageCircle className="h-4 w-4" aria-hidden="true" />
                       <span>{f.sendWhatsappBtn}</span>
                     </a>
                     <a
                       href={submitted.mailUrl}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
                     >
                       <Mail className="h-4 w-4" aria-hidden="true" />
                       <span>{f.sendEmailBtn}</span>
                     </a>
+                    <button
+                      type="button"
+                      onClick={() => void handleCopySummary()}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-[#0d9488]" aria-hidden="true" />
+                      ) : (
+                        <Copy className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      <span>
+                        {copied
+                          ? language === 'fr'
+                            ? 'Copié'
+                            : 'Copied'
+                          : language === 'fr'
+                            ? 'Copier'
+                            : 'Copy'}
+                      </span>
+                    </button>
                   </div>
 
                   <button
@@ -255,19 +339,10 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form noValidate onSubmit={handleSubmit} className="space-y-5">
                   <div className="border-b border-slate-100 pb-4">
                     <h3 className="font-display text-xl font-bold text-[#08152d]">{f.title}</h3>
                   </div>
-
-                  {errorMsg && (
-                    <div
-                      role="alert"
-                      className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700"
-                    >
-                      {errorMsg}
-                    </div>
-                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -280,7 +355,10 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                         required
                         placeholder={f.fullNamePlaceholder}
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => {
+                          setFullName(e.target.value);
+                          if (errorMsg) setErrorMsg(null);
+                        }}
                         className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                       />
                     </div>
@@ -311,7 +389,10 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                         required
                         placeholder={f.phonePlaceholder}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (errorMsg) setErrorMsg(null);
+                        }}
                         className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                       />
                     </div>
@@ -323,10 +404,12 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                       <input
                         id="quote-email"
                         type="email"
-                        required
                         placeholder={f.emailPlaceholder}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errorMsg) setErrorMsg(null);
+                        }}
                         className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                       />
                     </div>
@@ -356,12 +439,12 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                       </label>
                       <select
                         id="quote-budget"
-                        value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
+                        value={budgetIndex}
+                        onChange={(e) => setBudgetIndex(Number(e.target.value))}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                       >
-                        {f.budgets.map((b) => (
-                          <option key={b} value={b}>
+                        {f.budgets.map((b, idx) => (
+                          <option key={b} value={idx}>
                             {b}
                           </option>
                         ))}
@@ -374,12 +457,12 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                       </label>
                       <select
                         id="quote-timeline"
-                        value={timeline}
-                        onChange={(e) => setTimeline(e.target.value)}
+                        value={timelineIndex}
+                        onChange={(e) => setTimelineIndex(Number(e.target.value))}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                       >
-                        {f.timelines.map((tl) => (
-                          <option key={tl} value={tl}>
+                        {f.timelines.map((tl, idx) => (
+                          <option key={tl} value={idx}>
                             {tl}
                           </option>
                         ))}
@@ -393,14 +476,23 @@ export const QuoteSection: React.FC<QuoteSectionProps> = ({
                     </label>
                     <textarea
                       id="quote-message"
-                      rows={4}
-                      required
+                      rows={3}
                       placeholder={f.messagePlaceholder}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                     />
                   </div>
+
+                  {errorMsg && (
+                    <div
+                      role="alert"
+                      aria-live="polite"
+                      className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700"
+                    >
+                      {errorMsg}
+                    </div>
+                  )}
 
                   <button
                     type="submit"

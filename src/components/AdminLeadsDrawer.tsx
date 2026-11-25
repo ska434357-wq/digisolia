@@ -16,12 +16,25 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(ADMIN_TOKEN_KEY));
   const [accessCode, setAccessCode] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [typeFilter, setTypeFilter] = useState<'all' | 'quote' | 'training'>('all');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const fetchLeads = useCallback(async (authToken: string) => {
     setLoading(true);
+    setActionError(null);
     try {
       const res = await fetch('/api/admin/leads', {
         headers: { Authorization: `Bearer ${authToken}` },
@@ -31,12 +44,21 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
         setToken(null);
         return;
       }
+      if (!res.ok) {
+        throw new Error('Failed to load leads');
+      }
       const data = (await res.json()) as { leads: LeadRecord[] };
       setLeads(data.leads || []);
+    } catch {
+      setActionError(
+        language === 'fr'
+          ? 'Impossible de charger les dossiers. Vérifiez votre connexion.'
+          : 'Unable to load records. Please check your connection.'
+      );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     if (token) {
@@ -70,24 +92,63 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
 
   const handleStatusChange = async (id: string, status: LeadStatus) => {
     if (!token) return;
-    await fetch(`/api/admin/leads/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/admin/leads/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (res.status === 401) {
+        sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+        setToken(null);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Update failed');
+      }
+      setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+    } catch {
+      setActionError(
+        language === 'fr'
+          ? 'Erreur lors de la mise à jour du statut.'
+          : 'Failed to update lead status.'
+      );
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!token) return;
-    await fetch(`/api/admin/leads/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setLeads((prev) => prev.filter((l) => l.id !== id));
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/admin/leads/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+        setToken(null);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Delete failed');
+      }
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+      setConfirmDeleteId(null);
+    } catch {
+      setActionError(
+        language === 'fr'
+          ? 'Erreur lors de la suppression du dossier.'
+          : 'Failed to delete record.'
+      );
+    }
   };
 
   const handleExportCsv = () => {
@@ -146,6 +207,9 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-drawer-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex justify-end bg-slate-950/75 backdrop-blur-xs"
     >
       <div className="flex h-full w-full max-w-3xl flex-col bg-white text-slate-900 shadow-2xl">
@@ -174,7 +238,7 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
                 <span>{t.codeLabel}</span>
               </div>
               {authError && (
-                <p className="text-xs font-medium text-red-600">{authError}</p>
+                <p role="alert" className="text-xs font-medium text-red-600">{authError}</p>
               )}
               <input
                 type="password"
@@ -187,7 +251,7 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-[#08152d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#10264a]"
+                className="w-full rounded-lg bg-[#08152d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#10264a] disabled:opacity-60"
               >
                 {t.loginBtn}
               </button>
@@ -195,6 +259,12 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {actionError && (
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+                {actionError}
+              </div>
+            )}
+
             {/* Summary Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
@@ -294,14 +364,34 @@ export const AdminLeadsDrawer: React.FC<AdminLeadsDrawerProps> = ({ language, on
                           <option value="qualified">{t.statuses.qualified}</option>
                           <option value="archived">{t.statuses.archived}</option>
                         </select>
-                        <button
-                          type="button"
-                          onClick={() => void handleDelete(lead.id)}
-                          aria-label={t.deleteConfirm}
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+
+                        {confirmDeleteId === lead.id ? (
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => void handleDelete(lead.id)}
+                              className="rounded-md bg-red-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-red-700"
+                            >
+                              {language === 'fr' ? 'Confirmer' : 'Confirm'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="rounded-md border border-slate-300 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+                            >
+                              {language === 'fr' ? 'Annuler' : 'Cancel'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(lead.id)}
+                            aria-label={t.deleteConfirm}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
 

@@ -1,5 +1,5 @@
-import { CheckCircle2, Mail, MessageCircle, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { Check, CheckCircle2, Copy, Mail, MessageCircle, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { translations } from '../i18n/translations';
 import type { Language, LeadPayload, TrainingProgram } from '../types';
 import {
@@ -31,24 +31,51 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [participantsCount, setParticipantsCount] = useState(1);
-  const [preferredFormat, setPreferredFormat] = useState<string>(t.formats[0]);
+  const [formatIndex, setFormatIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [savedRef, setSavedRef] = useState<{ id: string; offline: boolean } | null>(null);
 
-  const validate = () => {
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const preferredFormat = t.formats[formatIndex] ?? t.formats[0];
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const getValidationError = (): string | null => {
+    if (fullName.trim().length < 2) {
+      return language === 'fr'
+        ? 'Veuillez renseigner votre nom complet (au moins 2 caractères).'
+        : 'Please enter your full name (at least 2 characters).';
+    }
     const digits = phone.replace(/[^\d]/g, '');
-    const phoneOk = digits.length >= 8 && digits.length <= 16;
-    return fullName.trim().length >= 2 && emailOk && phoneOk;
+    if (digits.length < 8 || digits.length > 16) {
+      return language === 'fr'
+        ? 'Veuillez saisir un numéro WhatsApp valide (au moins 8 chiffres).'
+        : 'Please enter a valid WhatsApp phone number (at least 8 digits).';
+    }
+    if (email.trim().length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return language === 'fr'
+        ? 'L’adresse email saisie semble invalide (ou laissez le champ vide).'
+        : 'The email address looks invalid (or leave the field blank).';
+    }
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!validate()) {
-      setErrorMsg(quoteErr);
+    const validationError = getValidationError();
+    if (validationError) {
+      setErrorMsg(validationError);
       return;
     }
 
@@ -61,7 +88,10 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
       service: 'ai_training',
       budget: program.priceFcfa,
       timeline: program.nextSession[language],
-      message: `Inscription formation : ${program.title[language]}`,
+      message:
+        language === 'en'
+          ? `Training registration: ${program.title.en}`
+          : `Inscription formation : ${program.title.fr}`,
       trainingId: program.id,
       trainingTitle: program.title[language],
       participantsCount,
@@ -83,6 +113,10 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
+        if (res.status === 400) {
+          setErrorMsg(quoteErr);
+          return;
+        }
         throw new Error('Server rejected enrollment');
       }
       const data = (await res.json()) as { id: string };
@@ -112,11 +146,24 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
     waText
   );
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(waText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Ignore clipboard failure
+    }
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="training-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm overflow-y-auto"
     >
       <div className="my-8 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 text-slate-900 shadow-2xl">
@@ -168,11 +215,19 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
               </a>
               <a
                 href={mailHref}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
                 <Mail className="h-4 w-4" aria-hidden="true" />
                 <span>{t.openEmail}</span>
               </a>
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                {copied ? <Check className="h-4 w-4 text-[#0d9488]" /> : <Copy className="h-4 w-4" />}
+                <span>{copied ? (language === 'fr' ? 'Copié' : 'Copied') : (language === 'fr' ? 'Copier' : 'Copy')}</span>
+              </button>
             </div>
 
             <button
@@ -184,25 +239,22 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <form noValidate onSubmit={handleSubmit} className="mt-5 space-y-4">
             <p className="text-sm text-slate-600">{t.subtitle}</p>
-
-            {errorMsg && (
-              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700">
-                {errorMsg}
-              </div>
-            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  {t.fullName} *
+                  {t.fullName}
                 </label>
                 <input
                   type="text"
                   required
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                 />
               </div>
@@ -223,28 +275,33 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  {t.phone} *
+                  {t.phone}
                 </label>
                 <input
                   type="tel"
                   required
                   placeholder="+226 70 00 00 00"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  {t.email} *
+                  {t.email}
                 </label>
                 <input
                   type="email"
-                  required
                   placeholder="nom@entreprise.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                 />
               </div>
@@ -260,7 +317,7 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
                   min={1}
                   max={200}
                   value={participantsCount}
-                  onChange={(e) => setParticipantsCount(Math.max(1, Number(e.target.value) || 1))}
+                  onChange={(e) => setParticipantsCount(Math.max(1, Math.min(200, Number(e.target.value) || 1)))}
                   className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm font-mono tabular-nums text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                 />
               </div>
@@ -270,18 +327,24 @@ export const TrainingEnrollmentModal: React.FC<TrainingEnrollmentModalProps> = (
                   {t.format}
                 </label>
                 <select
-                  value={preferredFormat}
-                  onChange={(e) => setPreferredFormat(e.target.value)}
+                  value={formatIndex}
+                  onChange={(e) => setFormatIndex(Number(e.target.value))}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20"
                 >
-                  {t.formats.map((fmt) => (
-                    <option key={fmt} value={fmt}>
+                  {t.formats.map((fmt, idx) => (
+                    <option key={fmt} value={idx}>
                       {fmt}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
+
+            {errorMsg && (
+              <div role="alert" aria-live="polite" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700">
+                {errorMsg}
+              </div>
+            )}
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <button

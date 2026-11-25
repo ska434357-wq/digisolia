@@ -124,10 +124,10 @@ export const translations = {
         title: 'Inscription au programme',
         subtitle:
           'Réservez votre place ou demandez une session intra-entreprise. Votre demande est enregistrée et prête à être confirmée sur WhatsApp.',
-        fullName: 'Nom et prénom',
+        fullName: 'Nom et prénom *',
         company: 'Entreprise / Organisation',
-        phone: 'Téléphone WhatsApp',
-        email: 'Email professionnel',
+        phone: 'Téléphone WhatsApp *',
+        email: 'Email professionnel (optionnel)',
         participants: 'Nombre de participants',
         format: 'Format souhaité',
         formats: [
@@ -198,7 +198,7 @@ export const translations = {
         companyPlaceholder: 'Ex. Faso Logistique SARL',
         phone: 'Téléphone / WhatsApp *',
         phonePlaceholder: 'Ex. +226 70 00 00 00',
-        email: 'Adresse email *',
+        email: 'Adresse email (optionnel)',
         emailPlaceholder: 'nom@entreprise.com',
         service: 'Service prioritaire *',
         services: {
@@ -222,7 +222,7 @@ export const translations = {
           '3 mois et plus',
           'Flexible / Exploration',
         ],
-        message: 'Contexte et objectifs du projet *',
+        message: 'Contexte et objectifs du projet (optionnel)',
         messagePlaceholder:
           'Décrivez brièvement le processus à digitaliser, les utilisateurs concernés ou vos objectifs de formation...',
         submit: 'Enregistrer et préparer l’envoi',
@@ -254,7 +254,7 @@ export const translations = {
       title: 'Gestion des Leads & Inscriptions DigiSolia',
       subtitle: 'Consultez les demandes de devis et pré-inscriptions enregistrées dans la base SQLite.',
       codeLabel: 'Code d’accès équipe',
-      codePlaceholder: 'Entrez le code d’accès (ex. DIGISOLIA-2026)',
+      codePlaceholder: 'Entrez votre code d’accès équipe',
       loginBtn: 'Accéder au tableau de suivi',
       invalidCode: 'Code d’accès invalide.',
       closeBtn: 'Fermer',
@@ -402,10 +402,10 @@ export const translations = {
         title: 'Program Registration',
         subtitle:
           'Reserve your seat or request an in-company cohort. Your registration is saved securely and ready to confirm via WhatsApp.',
-        fullName: 'Full name',
+        fullName: 'Full name *',
         company: 'Company / Organization',
-        phone: 'WhatsApp Phone',
-        email: 'Work Email',
+        phone: 'WhatsApp Phone *',
+        email: 'Work Email (optional)',
         participants: 'Number of participants',
         format: 'Preferred format',
         formats: [
@@ -476,7 +476,7 @@ export const translations = {
         companyPlaceholder: 'e.g. Sahel Logistics Ltd',
         phone: 'Phone / WhatsApp *',
         phonePlaceholder: 'e.g. +226 70 00 00 00',
-        email: 'Email Address *',
+        email: 'Email Address (optional)',
         emailPlaceholder: 'name@company.com',
         service: 'Primary Service *',
         services: {
@@ -500,7 +500,7 @@ export const translations = {
           '3+ months',
           'Flexible / Exploring',
         ],
-        message: 'Project Context & Goals *',
+        message: 'Project Context & Goals (optional)',
         messagePlaceholder:
           'Briefly describe the workflow you want to digitize, target users, or training objectives...',
         submit: 'Save & Prepare Dispatch',
@@ -532,7 +532,7 @@ export const translations = {
       title: 'DigiSolia Leads & Training Registrations',
       subtitle: 'Review quote requests and training pre-registrations stored in SQLite.',
       codeLabel: 'Team Access Code',
-      codePlaceholder: 'Enter access code (e.g. DIGISOLIA-2026)',
+      codePlaceholder: 'Enter your team access code',
       loginBtn: 'Open Leads Dashboard',
       invalidCode: 'Invalid access code.',
       closeBtn: 'Close',

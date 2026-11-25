@@ -27,7 +27,7 @@ export const TrainingCatalog: React.FC<TrainingCatalogProps> = ({
       : TRAINING_PROGRAMS.filter((p) => p.audience === audienceFilter);
 
   return (
-    <section id="formations" className="border-t border-slate-200 bg-white py-20 sm:py-24">
+    <section id="formations" className="scroll-mt-16 border-t border-slate-200 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="max-w-2xl">

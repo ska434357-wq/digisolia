@@ -1,17 +1,19 @@
 import Database from 'better-sqlite3';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import express, { type NextFunction, type Request, type Response } from 'express';
+import express from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_CODE = process.env.ADMIN_ACCESS_CODE || 'DIGISOLIA-2026';
-const TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || crypto.createHash('sha256').update(ADMIN_CODE + ':digisolia').digest('hex');
+const TOKEN_SECRET =
+  process.env.ADMIN_TOKEN_SECRET ||
+  crypto.createHash('sha256').update(ADMIN_CODE + ':digisolia').digest('hex');
 
 const dbPath = path.resolve(process.cwd(), 'digisolia.db');
 const db = new Database(dbPath);
@@ -122,10 +124,20 @@ async function startServer() {
     const message = String(body.message || '').trim().slice(0, 2000);
     const language = body.language === 'en' ? 'en' : 'fr';
 
-    if (!fullName || !isValidPhone(phone) || !isValidEmail(email) || !message) {
+    if (
+      fullName.length < 2 ||
+      !isValidPhone(phone) ||
+      (email.length > 0 && !isValidEmail(email))
+    ) {
       res.status(400).json({ error: 'Invalid or incomplete quote request fields.' });
       return;
     }
+
+    const safeMessage =
+      message ||
+      (language === 'en'
+        ? `Quote request for ${service}${budget ? ` (${budget})` : ''}`
+        : `Demande de devis pour ${service}${budget ? ` (${budget})` : ''}`);
 
     const allowedServices = new Set(['web', 'mobile', 'automation', 'ai_training']);
     const safeService = allowedServices.has(service) ? service : 'web';
@@ -138,7 +150,7 @@ async function startServer() {
       ) VALUES (?, 'quote', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
     `);
 
-    stmt.run(id, fullName, company, phone, email, safeService, budget, timeline, message, language, createdAt);
+    stmt.run(id, fullName, company, phone, email, safeService, budget, timeline, safeMessage, language, createdAt);
     res.status(201).json({ id, status: 'new', createdAt });
   });
 
@@ -155,7 +167,13 @@ async function startServer() {
     const message = String(body.message || '').trim().slice(0, 1500);
     const language = body.language === 'en' ? 'en' : 'fr';
 
-    if (!fullName || !isValidPhone(phone) || !isValidEmail(email) || !trainingId || !trainingTitle) {
+    if (
+      fullName.length < 2 ||
+      !isValidPhone(phone) ||
+      (email.length > 0 && !isValidEmail(email)) ||
+      !trainingId ||
+      !trainingTitle
+    ) {
       res.status(400).json({ error: 'Invalid or incomplete training enrollment fields.' });
       return;
     }
@@ -228,7 +246,19 @@ async function startServer() {
     res.json({ ok: true, id });
   });
 
+  // Ensure unknown /api/* paths return JSON 404 instead of SPA index.html
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+  });
+
+  // JSON parse & server error handler
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('Server error:', err.message);
+    res.status(400).json({ error: 'Malformed request payload' });
+  });
+
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
@@ -254,6 +284,15 @@ async function startServer() {
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`DigiSolia server listening on http://localhost:${PORT}`);
   });
+
+  const shutdown = () => {
+    httpServer.close(() => {
+      db.close();
+      process.exit(0);
+    });
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 void startServer();

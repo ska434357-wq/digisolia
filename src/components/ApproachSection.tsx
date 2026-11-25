@@ -17,7 +17,7 @@ export const ApproachSection: React.FC<ApproachSectionProps> = ({ language }) =>
   );
 
   return (
-    <section id="apropos" className="border-t border-slate-200 bg-[#f8fafc] py-20 sm:py-24">
+    <section id="apropos" className="scroll-mt-16 border-t border-slate-200 bg-[#f8fafc] py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-center">

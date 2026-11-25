@@ -68,7 +68,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ language }) => {
   return (
     <section
       id="accueil"
-      className="relative overflow-hidden bg-[#08152d] text-white"
+      className="scroll-mt-16 relative overflow-hidden bg-[#08152d] text-white"
       style={{
         backgroundImage:
           'radial-gradient(ellipse 60% 50% at 85% 15%, rgba(37, 99, 235, 0.22), transparent), linear-gradient(150deg, #08152d 0%, #0f254a 65%, #092c46 100%)',
